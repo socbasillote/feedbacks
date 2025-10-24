@@ -16,7 +16,13 @@ router.post("/signup", async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await User.create({ email, password: hashedPassword });
 
-    res.status(201).json({ message: "User created successfully", user });
+    const token = jwt.sign(
+      { id: user._id, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    res.status(201).json({ success: true, message: "User created successfully", token, user: { _id: user._id, email: user.email} });
   } catch (err) {
     res.status(500).json({ error: "Server error" });
   }
@@ -37,7 +43,7 @@ router.post("/login", async (req, res) => {
       expiresIn: "7d",
     });
 
-    res.json({ message: "Login successful", token });
+    res.json({success: true, message: "Login successful", token, user: { _id: user._id, email: user.email } });
   } catch (err) {
     res.status(500).json({ error: "Server error" });
   }

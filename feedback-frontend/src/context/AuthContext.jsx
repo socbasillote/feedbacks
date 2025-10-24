@@ -3,31 +3,82 @@ import React, { createContext, useState, useEffect } from "react";
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const storedUser = localStorage.getItem("user")
-  ? JSON.parse(localStorage.getItem("user"))
-  : null;
+  const API_BASE = "http://localhost:5000";
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(null);
 
-const [user, setUser] = useState(storedUser);
+  // Load user safely from LocalStorage on startup
+  useEffect(() => {
+    try {
+      const storedUser = localStorage.getItem("user")
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
+      }
+    } catch (error) {
+      console.error(" Failed to parse user from localStorage", error);
+      localStorage.removeItem("user");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
 
-  const [token, setToken] = useState(() => localStorage.getItem("token") || "");
+  const login = async (email, password) => {
+    try {
+      const res = await fetch(`${API_BASE}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
 
-  const login = (userData, jwtToken) => {
-    setUser(userData);
-    setToken(jwtToken);
-    localStorage.setItem("user", JSON.stringify(userData));
-    localStorage.setItem("token", jwtToken);
+      const data = await res.json();
+      if (data.success) {
+        setUser(data.user);
+        localStorage.setItem("user", JSON.stringify(data.user));
+        localStorage.setItem("token", data.token); // store token
+        return { success: true };
+      } else {
+        return { success: false, message: data.message || "Login failed." };
+      }
+    } catch (err) {
+      console.error("Error logging in:", err);
+      return { success: false, message: "Server error."};
+    }
   };
+
+  const signup = async (email, password) => {
+    try {
+      const res = await fetch(`${API_BASE}/auth/signup`, {
+        method: 'POST',
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setUser(data.user);
+        localStorage.setItem("user", JSON.stringify(data.user));
+        localStorage.setItem("token", data.token); // store token
+        return { success: true };
+      } else {
+        return { success: false, message: data.message || "Signup failed." };
+      }
+    } catch (err) {
+      console.error("Error signning up:", err);
+      return { success: false, message: "Server error." };
+    }
+  };
+
+
 
   const logout = () => {
     setUser(null);
-    setToken("");
     localStorage.removeItem("user");
     localStorage.removeItem("token");
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout }}>
+    <AuthContext.Provider value={{ user,  login, logout, signup, isAuthenticated: !!user, }}>
       {children}
     </AuthContext.Provider>
   );

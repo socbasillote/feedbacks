@@ -1,39 +1,24 @@
-
-import { Routes, Route, Link, Navigate } from "react-router-dom";
-import { AuthContext } from './context/AuthContext';
-import Signup from './pages/Signup';
-import Login from './pages/Login';
-import FeedbackBoard from './pages/FeedbackBoard';
-import { useContext } from "react";
-
-
+import React from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+import Home from "./pages/Home"; // You can make this later
+import { AuthProvider } from "./context/AuthContext";
+import MyFeedback from "./pages/MyFeedback";
 
 function App() {
-  const { user, logout } = useContext(AuthContext);
-
   return (
-    <div>
-      <nav>
-        <Link to="/">Feedback Board</Link> | {" "}
-        <Link to="/login">Login</Link> | {" "}
-        <Link to="/signup">Signup</Link> | {" "}
-        {user && (
-          <button onClick={logout} style={{ marginLeft: "10px"}}>
-              Logout
-          </button>
-        )}
-      </nav>
-
-      {user && <p>Logged in as: <strong>{user.email}</strong></p>}
-
-      <Routes>
-        <Route path="/" element={<FeedbackBoard />} />
-        <Route path="login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route path="*" element={<Navigate to="/" />} />
-      </Routes>
-    </div>
-  )
+    <AuthProvider>
+      <Router>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/my" element={<MyFeedback />} />
+        </Routes>
+      </Router>
+    </AuthProvider>
+  );
 }
 
-export default App
+export default App;
