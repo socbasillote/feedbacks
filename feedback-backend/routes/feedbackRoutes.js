@@ -67,5 +67,24 @@ router.delete("/:id", protect, async (req, res) => {
   }
 });
 
+// UPDATE feedback
+router.put("/:id", protect, async (req, res) => {
+  try {
+    const feedback = await Feedback.findById(req.params.id);
+    if (!feedback) return res.status(404).json({ message: "Feedback not found" });
+
+    // Only the owner can edit
+    if (feedback.user.toString() !== req.user.id)
+      return res.status(403).json({ message: "Not authorized to edit this feedback" });
+
+    feedback.message = req.body.message || feedback.message;
+    const updated = await feedback.save();
+
+    res.json(updated);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
 
 export default router;
